@@ -1,0 +1,103 @@
+import numpy as np
+import pandas as pd
+
+# minimum value and maximum value of the variables in the function
+min_value = -10
+max_value = 10
+
+# number of variables, length of chromosome
+m = 2
+
+# number of chromosomes in population
+n = 20
+
+p_c = 1
+p_m = 1
+
+# maximum generation
+N = 100
+
+def createPopulation():
+    pop = np.random.rand(n, m)*(max_value - min_value) + min_value
+    pop = pd.DataFrame(pop)
+    pop.columns = ['x', 'y']
+    
+    return pop
+
+def fitness(pop):
+    fitness = (pop['x'] + 2*pop['y'] - 7)**2 + (2*pop['x'] + pop['y'] - 5)**2
+    pop['fitness'] = fitness
+    
+    return pop
+
+def randomSelection():
+    position = np.random.permutation(n)
+    
+    return position[0], position[1]
+
+def crossover(pop):
+    popc = pop.copy()
+    for i in range(n):
+        a, b = randomSelection()
+        x = (pop.loc[a] + pop.loc[b])/2
+        popc.loc[i] = x
+    
+    return popc
+
+def mutation(popc):
+    popm = popc.copy()
+
+    for i in range(n):
+        for j in popm.columns:
+            popm.loc[i][j] += np.random.rand()*0.2-0.1
+
+    return popm
+
+def combinePopulation(pop, popc, popm):
+    popAll = pop.copy()
+    popAll = popAll.append(popc)
+    popAll = popAll.append(popm)
+
+    popAll = popAll.drop_duplicates()
+
+    popAll.index = range(len(popAll))
+
+    return popAll
+
+def sort(popAll):
+    popAll = popAll.sort_values(by=['fitness'])
+    
+    popAll.index = range(len(popAll))
+
+    return popAll
+
+def elimination(popAll):
+    pop = popAll.head(n)
+    
+    return pop
+
+pop = createPopulation()
+pop = fitness(pop)
+print('Populasi awal')
+print(pop)
+
+for i in range(1, N+1):
+    popc = crossover(pop)
+    popc = fitness(popc)
+
+    popm = mutation(popc)
+    popm = fitness(popm)
+
+    popAll = combinePopulation(pop, popc, popm)
+
+    popAll = sort(popAll)
+
+    pop = elimination(popAll)
+    
+    print()
+    print(i)
+    print(pop)
+
+print()
+print('Populasi akhir')
+print(pop)
